@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borneo-IRT TAIWAN 2026 | SPARK</title>
+    <style>
+        /* =========================================
+           1. 全域變數與重置 (Global & Reset)
+           ========================================= */
+        :root {
+            /* 馬來西亞國旗配色 */
+            --my-blue: #010066;
+            --my-yellow: #FFCC00;
+            --my-red: #CC0000;
+            --my-white: #FFFFFF;
+            
+            /* 漸變色票 (酒紅 -> 紫) */
+            --c-wine: #8B0000;
+            --c-red: #FF0000;
+            --c-orange: #FF8C00;
+            --c-yellow: #FFFF00;
+            --c-cyan: #00FF7F; /* 青綠 */
+            --c-tiff: #0ABAB5; /* 蒂芬妮綠 */
+            --c-lblue: #87CEFA;
+            --c-blue: #0000FF;
+            --c-dblue: #00008B;
+            --c-purple: #800080;
+
+            /* 背景基調 */
+            --bg-deep: #000b1f; /* 深藍黑 */
+            --bg-grad: linear-gradient(135deg, #000b1f 0%, #021a40 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-deep);
+            color: var(--my-white);
+            overflow-x: hidden;
+            /* 預留給跑馬燈與底部導覽列空間 */
+            padding-bottom: 60px; 
+        }
+
+        /* 運動競技風格字體設定 */
+        h1, h2, h3, .sport-font {
+            font-style: italic; /* 斜體增加速度感 */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 800;
+        }
+
+        /* =========================================
+           2. 動態背景 Canvas (Background)
+           ========================================= */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 最底層 */
+            background: var(--bg-grad);
+        }
+
+        /* =========================================
+           3. 導覽列 (Navigation)
+           ========================================= */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            background: rgba(1, 0, 102, 0.7); /* 半透明深藍 */
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-logo {
+            height: 40px;
+            width: auto;
+            /* 預設圖示 */
+            background: rgba(255,255,255,0.2); 
+            border-radius: 5px;
+        }
+
+        .nav-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--my-white);
+            text-shadow: 0 0 5px var(--c-lblue);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--my-white);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--my-yellow);
+        }
+
+        /* 手機版導覽選單隱藏 (簡化版，主依賴底部導覽) */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+        }
+
+        /* =========================================
+           4. 首頁區塊 (Home Section)
+           ========================================= */
+        .section {
+            min-height: 100vh;
+            padding: 100px 5% 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        #home {
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* 逐字配色與動態流光標題 */
+        .hero-title {
+            font-size: 5rem;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+
+        .hero-char {
+            display: inline-block;
+            animation: textShimmer 3s infinite alternate;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+        /* 定義每個字母的顏色 */
+        .char-B { color: var(--c-wine); }
+        .char-o1 { color: var(--c-red); }
+        .char-r1 { color: var(--c-orange); }
+        .char-n { color: var(--c-yellow); }
+        .char-e { color: var(--c-cyan); }
+        .char-o2 { color: var(--c-tiff); }
+        .char-dash { color: var(--c-lblue); }
+        .char-I { color: var(--c-blue); }
+        .char-R2 { color: var(--c-dblue); }
+        .char-T { color: var(--c-purple); }
+
+        @keyframes textShimmer {
+            0% { filter: brightness(100%); transform: scale(1); }
+            50% { filter: brightness(130%); transform: scale(1.02); }
+            100% { filter: brightness(100%); transform: scale(1); }
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--my-white);
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            opacity: 0.9;
+        }
+
+        .hero-sub-taiwan {
+            font-size: 2rem;
+            color: var(--my-yellow);
+            font-weight: bold;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px var(--c-orange);
+        }
+
+        /* 首頁動態影片容器 */
+        .hero-video-container {
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 16/9;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 0, 255, 0.3);
+            background: #000;
+            position: relative;
+        }
+        
+        .hero-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 確保 Logo 完整顯示 */
+        }
+
+        /* 響應式字體調整 */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 3rem; }
+            .hero-subtitle { font-size: 0.8rem; }
+        }
+
+        /* =========================================
+           5. 通用區塊樣式：活動公告 & 聯絡我們 (Common)
+           ========================================= */
+        .content-container {
+            position: relative;
+            background: rgba(0, 11, 31, 0.8);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 1000px;
+            margin: 20px auto;
+            color: #fff;
+            /* 漸變流水燈邊框實作 */
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* 使用偽元素製作流光邊框 */
+        .content-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                var(--c-wine), 
+                var(--c-orange), 
+                var(--c-yellow), 
+                var(--c-tiff), 
+                var(--c-blue), 
+                var(--c-purple), 
+                var(--c-wine)
+            );
+            animation: borderRotate 4s linear infinite;
+            z-index: -2;
+        }
+
+        .content-container::after {
+            content: '';
+            position: absolute;
+            inset: 3px; /* 邊框寬度 */
+            background: var(--bg-deep); /* 內部背景遮罩 */
+            border-radius: 18px;
+            z-index: -1;
+        }
+
+        @keyframes borderRotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--my-yellow);
+            text-shadow: 2px 2px 0 var(--my-red);
+        }
+
+        /* 活動公告特定樣式 */
+        .anno-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .anno-item {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .anno-label { color: var(--c-lblue); font-size: 0.9rem; }
+        .anno-value { font-size: 1.2rem; font-weight: bold; }
+        .package-box {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        /* =========================================
+           6. 競賽規則區塊 (Rules Section)
+           ========================================= */
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .rule-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .rule-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .rule-card h3 { color: var(--c-tiff); margin-bottom: 10px; }
+        .spike-warning {
+            color: var(--my-red);
+            font-weight: bold;
+            font-size: 1.1rem;
+            border: 2px solid var(--my-red);
+            padding: 10px;
+            display: inline-block;
+            margin-bottom: 20px;
+            background: rgba(204, 0, 0, 0.1);
+            animation: pulseWarning 2s infinite;
+        }
+
+        @keyframes pulseWarning {
+            0% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(204, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0); }
+        }
+
+        /* =========================================
+           7. 聯絡我們 (Contact)
+           ========================================= */
+        .contact-flex {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .contact-box {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            background: rgba(0,0,0,0.3);
+            animation: floatBox 3s ease-in-out infinite;
+        }
+        
+        /* 每個盒子不同的浮動延遲 */
+        .contact-box:nth-child(1) { animation-delay: 0s; }
+        .contact-box:nth-child(2) { animation-delay: 1s; }
+        .contact-box:nth-child(3) { animation-delay: 2s; }
+
+        @keyframes floatBox {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .contact-box img {
+            width: 60px;
+            height: 60px;
+            z-index: 2;
+        }
+
+        /* 聯絡框懸停變色流水燈 - 這裡簡化為發光邊框變化 */
+        .contact-box:hover {
+            box-shadow: 0 0 20px var(--c-cyan);
+            border: 2px solid var(--c-cyan);
+        }
+
+        /* =========================================
+           8. 快速存取懸浮系統 (Floating Action System)
+           ========================================= */
+        .fab-container {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 2000;
+        }
+
+        .fab-btn {
+            width: 160px; /* 初始寬度 */
+            height: 50px;
+            border-radius: 25px; /* 膠囊狀 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #fff;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+
+        /* 按鈕配色 */
+        .fab-blue { background: var(--c-blue); }
+        .fab-yellow { background: var(--my-yellow); color: #000; }
+        .fab-red { background: var(--my-red); }
+        .fab-white { background: var(--my-white); color: var(--bg-deep); border: 2px solid var(--bg-deep); }
+
+        /* 電腦版懸停效果 */
+        @media (min-width: 769px) {
+            .fab-btn {
+                width: 50px; /* 收縮狀態，只顯示顏色/圖示 */
+                overflow: hidden;
+                white-space: nowrap;
+                justify-content: flex-start;
+                padding-left: 15px; /* 文字縮排 */
+            }
+            .fab-btn::after {
+                content: attr(data-text);
+                opacity: 0;
+                transition: opacity 0.2s;
+                margin-left: 10px;
+            }
+            .fab-btn:hover {
+                width: 180px; /* 展開狀態 */
+                transform: translateX(-10px) scale(1.05); /* 向左彈出 */
+                padding-left: 20px;
+            }
+            .fab-btn:hover::after {
+                opacity: 1;
+            }
+            
+            /* 脈衝動畫 */
+            .fab-btn { animation: pulseBtn 3s infinite; }
+        }
+
+        @keyframes pulseBtn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* 手機版樣式轉變 */
+        @media (max-width: 768px) {
+            .fab-container {
+                top: auto;
+                bottom: 40px; /* 位於跑馬燈上方 */
+                right: 0;
+                left: 0;
+                flex-direction: row;
+                justify-content: space-around;
+                width: 100%;
+                background: rgba(0, 11, 31, 0.9);
+                padding: 10px;
+                transform: none;
+                backdrop-filter: blur(5px);
+                border-top: 1px solid rgba(255,255,255,0.2);
+            }
+
+            .fab-btn {
+                width: auto;
+                flex: 1;
+                margin: 0 5px;
+                font-size: 0.8rem;
+                height: 40px;
+                border-radius: 8px;
+            }
+            
+            /* 手機版顯示文字 */
+            .fab-btn::after {
+                content: attr(data-text);
+                opacity: 1;
+                margin-left: 0;
+            }
+        }
+
+        /* =========================================
+           9. 頁尾跑馬燈 (Footer Ticker)
+           ========================================= */
+        .footer-ticker {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            z-index: 2001; /* 最高層級 */
+            border-top: 2px solid var(--my-yellow);
+        }
+
+        .ticker-content {
+            white-space: nowrap;
+            display: inline-block;
+            color: var(--my-yellow);
+            font-style: italic;
+            font-weight: 900;
+            font-size: 1.2rem;
+            animation: marquee 20s linear infinite;
+            padding-left: 100%; /* 從最右邊開始 */
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="logo.png" alt="Logo" class="nav-logo"> <span class="nav-title sport-font">Borneo-IRT-TAIWAN</span>
+        </div>
+        <div class="nav-links">
+            <a href="#home">首頁</a>
+            <a href="#announcements">活動公告</a>
+            <a href="#rules">競賽規則</a>
+            <a href="#contact">聯絡我們</a>
+        </div>
+    </nav>
+
+    <section id="home" class="section">
+        <h1 class="hero-title sport-font">
+            <span class="hero-char char-B">B</span>
+            <span class="hero-char char-o1">o</span>
+            <span class="hero-char char-r1">r</span>
+            <span class="hero-char char-n">n</span>
+            <span class="hero-char char-e">e</span>
+            <span class="hero-char char-o2">o</span>
+            <span class="hero-char char-dash">-</span>
+            <span class="hero-char char-I">I</span>
+            <span class="hero-char char-R2">R</span>
+            <span class="hero-char char-T">T</span>
+        </h1>
+        
+        <div class="hero-subtitle">BORNEO INTERNATIONAL ROBOT TOURNAMENT</div>
+        <div class="hero-sub-taiwan sport-font">TAIWAN 2026</div>
+
+        <div class="hero-video-container">
+            <video autoplay loop muted playsinline>
+                <source src="logo1.mp4" type="video/mp4">
+            </video>
+        </div>
+    </section>
+
+    <section id="announcements" class="section">
+        <h2 class="section-title sport-font">ANNOUNCEMENTS</h2>
+        <div class="content-container">
+            <h3 style="text-align: center; margin-bottom: 20px; color: var(--my-yellow);">2026 賽事公告</h3>
+            
+            <div class="anno-grid">
+                <div class="anno-item">
+                    <div class="anno-label">報名日期</div>
+                    <div class="anno-value">2026/01/30 - 2026/03/19</div>
+                </div>
+                <div class="anno-item">
+                    <div class="anno-label">比賽日期</div>
+                    <div class="anno-value">2026/05/06 - 2026/05/09</div>
+                </div>
+            </div>
+
+            <div class="package-box">
+                <h4 style="color: var(--c-lblue);">Package A (雙人房)</h4>
+                <p>USD 300 / 人 (含5天4夜住宿、膳食、接駁、禮包)</p>
+            </div>
+            
+            <div class="package-box">
+                <h4 style="color: var(--c-orange);">Package B (單人房)</h4>
+                <p>USD 400 / 人 (含5天4夜住宿、膳食、接駁、禮包)</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="rules" class="section">
+        <h2 class="section-title sport-font">COMPETITION RULES</h2>
+        
+        <div class="spike-warning">
+            ⚠ HARDWARE LIMIT: LEGO EDUCATION SPIKE PRIME ONLY
+        </div>
+
+        <div class="rules-grid">
+            <div class="rule-card">
+                <h3>Robomission Battle</h3>
+                <p>國小 / 國中 / 高中組</p>
+                <p>結合任務與對戰的新賽制，考驗穩定性。</p>
+            </div>
+            <div class="rule-card">
+                <h3>RoboSport</h3>
+                <p>雙打網球 (Double Tennis)</p>
+                <p>11-18歲，策略對抗。</p>
+            </div>
+            <div class="rule-card">
+                <h3>RoboSumo</h3>
+                <p>SPIKE 相撲</p>
+                <p>禁止 EV3/NXT，純粹的機構較量。</p>
+            </div>
+            <div class="rule-card">
+                <h3>LOM Matrix</h3>
+                <p>機甲格鬥</p>
+                <p>15-21歲，高階程式控制。</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; color: #ccc;">
+            <p>積分制：勝 (3分) / 平 (1分) / 敗 (0分)</p>
+            <p>賽制：小組循環 -> 16強單敗淘汰</p>
+        </div>
+    </section>
+
+    <section id="contact" class="section">
+        <h2 class="section-title sport-font">CONTACT US</h2>
+        
+        <div class="content-container" style="text-align: center;">
+            <p style="margin-bottom: 30px;">SPARK 臺灣智能程式科技教育推廣協會</p>
+            
+            <div class="contact-flex">
+                <a href="#" target="_blank" class="contact-box">
+                    <img src="path/to/icon_fb.png" alt="FB">
+                </a>
+                <a href="#" target="_blank" class="contact-box">
+                    <img src="path/to/icon_ig.png" alt="IG">
+                </a>
+                <a href="mailto:example@gmail.com" class="contact-box">
+                    <img src="path/to/icon_mail.png" alt="Mail">
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <div class="fab-container">
+        <a href="#" class="fab-btn fab-blue" data-text="前往報名">Go</a>
+        <a href="#" class="fab-btn fab-yellow" data-text="競賽規則">Rule</a>
+        <a href="#" class="fab-btn fab-red" data-text="匯款表單">Pay</a>
+        <a href="#" class="fab-btn fab-white" data-text="加入群組">Grp</a>
+    </div>
+
+    <div class="footer-ticker">
+        <div class="ticker-content">
+            SPARK 臺灣智能程式科技教育推廣協會 &nbsp;&nbsp;&nbsp; BORNEO-IRT TAIWAN 2026 &nbsp;&nbsp;&nbsp; SPARK 臺灣智能程式科技教育推廣協會
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        // 初始化畫布尺寸
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 粒子類別 (星與月)
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 15 + 5; // 大小隨機
+                this.type = Math.random() > 0.5 ? 'star' : 'moon'; // 50% 機率
+                this.vx = (Math.random() - 0.5) * 0.5; // 緩慢漂浮 X
+                this.vy = (Math.random() - 0.5) * 0.5; // 緩慢漂浮 Y
+                this.opacity = Math.random();
+                this.fadeDir = Math.random() > 0.5 ? 0.005 : -0.005; // 呼吸速度
+                this.color = '#FFCC00'; // 馬來西亞黃
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+
+                if (this.type === 'star') {
+                    // 繪製 14 芒星
+                    ctx.beginPath();
+                    for (let i = 0; i < 28; i++) {
+                        const angle = (Math.PI * 2 * i) / 28;
+                        const r = (i % 2 === 0) ? this.size : this.size / 2.5;
+                        ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    // 繪製彎月
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2); // 主圓
+                    ctx.globalCompositeOperation = 'destination-out'; // 挖空模式
+                    ctx.arc(this.size * 0.3, -this.size * 0.3, this.size * 0.8, 0, Math.PI * 2); // 挖空圓
+                    ctx.fill();
+                    
+                    // 重置混合模式以顯示顏色
+                    ctx.globalCompositeOperation = 'source-over'; 
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(this.size * 0.4, -this.size * 0.2, this.size * 0.9, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            update() {
+                // 移動
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 邊界檢查 (無縫循環)
+                if (this.x < -50) this.x = width + 50;
+                if (this.x > width + 50) this.x = -50;
+                if (this.y < -50) this.y = height + 50;
+                if (this.y > height + 50) this.y = -50;
+
+                // 呼吸效果 (忽明忽暗)
+                this.opacity += this.fadeDir;
+                if (this.opacity >= 0.8 || this.opacity <= 0.1) {
+                    this.fadeDir = -this.fadeDir;
+                }
+            }
+        }
+
+        // 產生粒子
+        function initParticles() {
+            particles = [];
+            const count = Math.floor((width * height) / 15000); // 根據螢幕大小決定數量
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // 動畫迴圈
+        function animate() {
+            ctx.clearRect(0, 0, width, height); // 清除畫布
+            
+            // 重新繪製背景漸層 (確保不會被清空)
+            // 這裡不需要，因為 CSS 已經設定了背景色，Canvas 只是疊加
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        initParticles();
+        animate();
+
+        // 視窗改變時重置
+        window.addEventListener('resize', () => {
+            resize();
+            initParticles();
+        });
+
+    </script>
+</body>
+</html>
