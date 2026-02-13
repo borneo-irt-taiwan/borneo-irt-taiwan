@@ -529,23 +529,51 @@
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
         }
+/* --- 電子倒數計時器樣式 --- */
+.cyber-countdown {
+    display: flex; gap: 15px; margin: 20px auto 40px;
+    font-family: 'Share Tech Mono', monospace;
+    background: rgba(0,0,0,0.5); padding: 10px 20px;
+    border: 1px solid #00FF7F; border-radius: 5px;
+    width: fit-content; position: relative;
+    box-shadow: 0 0 15px rgba(0, 255, 127, 0.2);
+}
+.cyber-countdown::before {
+    content: 'REGISTRATION DEADLINE'; position: absolute;
+    top: -12px; left: 50%; transform: translateX(-50%);
+    background: #000b1f; padding: 0 5px; font-size: 0.7rem; color: #00FF7F;
+}
+.count-val { font-size: 1.8rem; color: #fff; text-shadow: 0 0 5px #00FF7F; min-width: 40px; display: inline-block; }
+.count-label { font-size: 0.7rem; color: #87CEFA; margin-top: -5px; }
+.glitch-effect { animation: glitch 0.3s infinite; }
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    100% { transform: translate(0); }
+}
 
+/* --- 掃描線過渡樣式 --- */
+#scan-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; opacity: 0; background: rgba(1, 0, 102, 0.2); transition: opacity 0.1s; }
+.scan-beam { position: absolute; top: -10%; left: 0; width: 100%; height: 20px; background: rgba(255, 255, 255, 0.8); box-shadow: 0 0 30px 10px rgba(0, 255, 255, 0.8); display: none; }
+.scanning { opacity: 1 !important; }
+.scanning .scan-beam { display: block; animation: beamDrop 1s cubic-bezier(0.645, 0.045, 0.355, 1.000) forwards; }
+@keyframes beamDrop { 0% { top: -10%; } 100% { top: 110%; } }
     </style>
 </head>
 <body>
-
+<div id="scan-overlay"><div class="scan-beam"></div></div>
     <canvas id="bg-canvas"></canvas>
 
     <nav class="navbar">
         <div class="nav-brand">
             <img src="logo.png" alt="Logo" class="nav-logo"> <span class="nav-title sport-font">Borneo-IRT-TAIWAN</span>
         </div>
-        <div class="nav-links">
-            <a href="#home">首頁</a>
-            <a href="#announcements">活動公告</a>
-            <a href="#rules">競賽規則</a>
-            <a href="#contact">聯絡我們</a>
-        </div>
+       <div class="nav-links">
+    <a href="#home" class="scan-link">首頁</a>
+    <a href="#announcements" class="scan-link">活動公告</a>
+    <a href="#rules" class="scan-link">競賽規則</a>
+    <a href="#contact" class="scan-link">聯絡我們</a>
+</div>
     </nav>
 
     <section id="home" class="section">
@@ -571,7 +599,15 @@
             </video>
         </div>
     </section>
-
+<div class="cyber-countdown">
+    <div class="count-block"><div id="d-val" class="count-val">00</div><div class="count-label">DAYS</div></div>
+    <div class="count-val">:</div>
+    <div class="count-block"><div id="h-val" class="count-val">00</div><div class="count-label">HOURS</div></div>
+    <div class="count-val">:</div>
+    <div class="count-block"><div id="m-val" class="count-val">00</div><div class="count-label">MIN</div></div>
+    <div class="count-val">:</div>
+    <div class="count-block"><div id="s-val" class="count-val">00</div><div class="count-label">SEC</div></div>
+</div>
     <section id="announcements" class="section">
         <h2 class="section-title sport-font">ANNOUNCEMENTS</h2>
         <div class="content-container">
@@ -675,10 +711,12 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('bg-canvas');
+       const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let width, height;
         let particles = [];
+        let trailParticles = []; // 新增：存放滑鼠尾跡粒子
+        let isHighEnergy = false; // 新增：能量模式狀態
 
         // 初始化畫布尺寸
         function resize() {
@@ -688,18 +726,39 @@
         window.addEventListener('resize', resize);
         resize();
 
+        // --- 新增：滑鼠尾跡粒子類別 ---
+        class TrailParticle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 10;
+                this.y = y + (Math.random() - 0.5) * 10;
+                this.size = Math.random() * 3 + 1;
+                this.life = 1; 
+                this.decay = 0.02; 
+            }
+            update() {
+                this.life -= this.decay;
+                this.size *= 0.95; 
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 204, 0, ${this.life})`; // 使用馬來西亞黃
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
         // 粒子類別 (星與月)
         class Particle {
             constructor() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.size = Math.random() * 15 + 5; // 大小隨機
-                this.type = Math.random() > 0.5 ? 'star' : 'moon'; // 50% 機率
-                this.vx = (Math.random() - 0.5) * 0.5; // 緩慢漂浮 X
-                this.vy = (Math.random() - 0.5) * 0.5; // 緩慢漂浮 Y
+                this.size = Math.random() * 15 + 5; 
+                this.type = Math.random() > 0.5 ? 'star' : 'moon'; 
+                this.vx = (Math.random() - 0.5) * 0.5; 
+                this.vy = (Math.random() - 0.5) * 0.5; 
                 this.opacity = Math.random();
-                this.fadeDir = Math.random() > 0.5 ? 0.005 : -0.005; // 呼吸速度
-                this.color = '#FFCC00'; // 馬來西亞黃
+                this.fadeDir = 0.005; 
+                this.color = '#FFCC00'; 
             }
 
             draw() {
@@ -707,11 +766,17 @@
                 ctx.translate(this.x, this.y);
                 ctx.globalAlpha = this.opacity;
                 ctx.fillStyle = this.color;
-                ctx.shadowBlur = 10;
+                
+                // --- 新增：能量匯聚效果 (抖動與發光) ---
+                if (isHighEnergy) {
+                    ctx.shadowBlur = 25;
+                    ctx.translate((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4);
+                } else {
+                    ctx.shadowBlur = 10;
+                }
                 ctx.shadowColor = this.color;
 
                 if (this.type === 'star') {
-                    // 繪製 14 芒星
                     ctx.beginPath();
                     for (let i = 0; i < 28; i++) {
                         const angle = (Math.PI * 2 * i) / 28;
@@ -721,14 +786,11 @@
                     ctx.closePath();
                     ctx.fill();
                 } else {
-                    // 繪製彎月
                     ctx.beginPath();
-                    ctx.arc(0, 0, this.size, 0, Math.PI * 2); // 主圓
-                    ctx.globalCompositeOperation = 'destination-out'; // 挖空模式
-                    ctx.arc(this.size * 0.3, -this.size * 0.3, this.size * 0.8, 0, Math.PI * 2); // 挖空圓
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.arc(this.size * 0.3, -this.size * 0.3, this.size * 0.8, 0, Math.PI * 2);
                     ctx.fill();
-                    
-                    // 重置混合模式以顯示顏色
                     ctx.globalCompositeOperation = 'source-over'; 
                     ctx.fillStyle = this.color;
                     ctx.beginPath();
@@ -738,52 +800,71 @@
                     ctx.beginPath();
                     ctx.arc(this.size * 0.4, -this.size * 0.2, this.size * 0.9, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.globalCompositeOperation = 'source-over'; 
                 }
-
                 ctx.restore();
             }
 
             update() {
-                // 移動
                 this.x += this.vx;
                 this.y += this.vy;
-
-                // 邊界檢查 (無縫循環)
                 if (this.x < -50) this.x = width + 50;
                 if (this.x > width + 50) this.x = -50;
                 if (this.y < -50) this.y = height + 50;
                 if (this.y > height + 50) this.y = -50;
 
-                // 呼吸效果 (忽明忽暗)
-                this.opacity += this.fadeDir;
-                if (this.opacity >= 0.8 || this.opacity <= 0.1) {
-                    this.fadeDir = -this.fadeDir;
-                }
+                // --- 新增：能量模式下呼吸加速 ---
+                let speed = isHighEnergy ? 0.08 : 0.005;
+                this.opacity += (this.fadeDir > 0 ? speed : -speed);
+                if (this.opacity >= 0.9) this.fadeDir = -1;
+                if (this.opacity <= 0.1) this.fadeDir = 1;
             }
         }
 
-        // 產生粒子
         function initParticles() {
             particles = [];
-            const count = Math.floor((width * height) / 15000); // 根據螢幕大小決定數量
+            const count = Math.floor((width * height) / 15000); 
             for (let i = 0; i < count; i++) {
                 particles.push(new Particle());
             }
         }
 
-        // 動畫迴圈
+        // 動畫迴圈 (已整合尾跡)
         function animate() {
-            ctx.clearRect(0, 0, width, height); // 清除畫布
+            ctx.clearRect(0, 0, width, height); 
             
-            // 重新繪製背景漸層 (確保不會被清空)
-            // 這裡不需要，因為 CSS 已經設定了背景色，Canvas 只是疊加
-            
+            // 繪製背景星月
             particles.forEach(p => {
                 p.update();
                 p.draw();
             });
+
+            // --- 新增：更新並繪製滑鼠尾跡 ---
+            for(let i = 0; i < trailParticles.length; i++) {
+                trailParticles[i].update();
+                trailParticles[i].draw();
+                if(trailParticles[i].life <= 0) {
+                    trailParticles.splice(i, 1);
+                    i--;
+                }
+            }
+
             requestAnimationFrame(animate);
         }
+
+        // --- 新增：監聽滑鼠移動產生粒子 ---
+        window.addEventListener('mousemove', (e) => {
+            for(let i=0; i<2; i++) { 
+                trailParticles.push(new TrailParticle(e.x, e.y)); 
+            }
+        });
+
+        // --- 新增：能量匯聚觸發監聽 ---
+        // 請確保你的「前往報名」或「SPIKE」標籤有加上 class="energy-trigger"
+        document.querySelectorAll('.energy-trigger, .spike-warning, .fab-blue').forEach(el => {
+            el.addEventListener('mouseenter', () => isHighEnergy = true);
+            el.addEventListener('mouseleave', () => isHighEnergy = false);
+        });
 
         initParticles();
         animate();
@@ -794,6 +875,45 @@
             initParticles();
         });
 
+        // 1. 掃描線過渡控制
+        document.querySelectorAll('.scan-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const overlay = document.getElementById('scan-overlay');
+                if(overlay) overlay.classList.add('scanning');
+                setTimeout(() => {
+                    document.querySelector(targetId).scrollIntoView({ behavior: 'auto' });
+                }, 500);
+                setTimeout(() => {
+                    if(overlay) overlay.classList.remove('scanning');
+                }, 1200);
+            });
+        });
+
+        // 2. 2026/3/19 倒數計時邏輯
+        const deadline = new Date('2026-03-19T23:59:59').getTime();
+        setInterval(() => {
+            const now = new Date().getTime();
+            const diff = deadline - now;
+            if (diff > 0) {
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                if(document.getElementById('d-val')) document.getElementById('d-val').innerText = d.toString().padStart(2, '0');
+                if(document.getElementById('h-val')) document.getElementById('h-val').innerText = h.toString().padStart(2, '0');
+                if(document.getElementById('m-val')) document.getElementById('m-val').innerText = m.toString().padStart(2, '0');
+                
+                const sElem = document.getElementById('s-val');
+                if(sElem && sElem.innerText != s) {
+                    sElem.innerText = s.toString().padStart(2, '0');
+                    sElem.classList.add('glitch-effect');
+                    setTimeout(() => sElem.classList.remove('glitch-effect'), 200);
+                }
+            }
+        }, 1000);
     </script>
 </body>
 </html>
