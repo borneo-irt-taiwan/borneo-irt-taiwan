@@ -147,76 +147,141 @@
             text-align: center;
         }
 
-        /* 逐字配色與動態流光標題 */
-        .hero-title {
-            font-size: 5rem;
-            line-height: 1.1;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: center;
-            gap: 2px;
-            flex-wrap: wrap;
-        }
+        /* 1. 主標題容器設定 */
+.hero-title {
+    font-size: 5rem;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    display: block; /* 改回 block 讓漸層能完整跨越 */
+    text-align: center;
+    
+    /* --- 核心特效：動態流光漸層 --- */
+    /* 將所有顏色接成一條長長的漸層帶 (最後加回酒紅以實現無縫循環) */
+    background-image: linear-gradient(
+        90deg, 
+        var(--c-wine), var(--c-red), var(--c-orange), var(--c-yellow), 
+        var(--c-cyan), var(--c-tiff), var(--c-lblue), var(--c-blue), 
+        var(--c-dblue), var(--c-purple), var(--c-wine)
+    );
+    /* 將背景放大至 300%，這樣移動時才有流動感 */
+    background-size: 300% auto;
+    /* 神奇語法：把背景剪裁成文字的形狀 */
+    background-clip: text;
+    -webkit-background-clip: text;
+    /* 把文字本身變透明，透出後面的背景 */
+    color: transparent;
+    
+    /* 套用流動動畫：5秒跑完一圈，線性等速，無限循環 */
+    animation: flowGradient 5s linear infinite;
+    
+    /* 增加一點發光感，讓漸層更亮 */
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+}
 
-        .hero-char {
-            display: inline-block;
-            animation: textShimmer 3s infinite alternate;
-            text-shadow: 0 0 15px rgba(255,255,255,0.3);
-        }
+/* 2. 定義流動動畫關鍵影格 */
+@keyframes flowGradient {
+    0% { background-position: 0% center; }
+    100% { background-position: -300% center; /* 往左移動背景 */ }
+}
 
-        /* 定義每個字母的顏色 */
-        .char-B { color: var(--c-wine); }
-        .char-o1 { color: var(--c-red); }
-        .char-r1 { color: var(--c-orange); }
-        .char-n { color: var(--c-yellow); }
-        .char-e { color: var(--c-cyan); }
-        .char-o2 { color: var(--c-tiff); }
-        .char-dash { color: var(--c-lblue); }
-        .char-I { color: var(--c-blue); }
-        .char-R2 { color: var(--c-dblue); }
-        .char-T { color: var(--c-purple); }
+/* 3. 重置原本單一字母的設定 */
+/* 因為現在是整體漸層，所以要取消個別字母的顏色和舊動畫 */
+.hero-char {
+    display: inline; /* 恢復為預設行內元素，讓漸層自然連貫 */
+    animation: none; /* 取消舊的閃爍動畫 */
+    text-shadow: none; /* 取消舊的陰影，改用整體的 drop-shadow */
+}
 
-        @keyframes textShimmer {
-            0% { filter: brightness(100%); transform: scale(1); }
-            50% { filter: brightness(130%); transform: scale(1.02); }
-            100% { filter: brightness(100%); transform: scale(1); }
-        }
+/* 4. 廢棄原本的個別配色 (這些都不需要了，因為顏色現在由整體的 background 控制) */
+/* .char-B { color: var(--c-wine); }
+.char-o1 { color: var(--c-red); }
+... (以下的 char-xxx 都不需要了，全部註解掉或刪除) ...
+.char-T { color: var(--c-purple); } 
+*/
+/* 為了保險起見，強制讓它們繼承父層的透明屬性 */
+[class^="char-"] {
+    color: inherit !important;
+}
 
-        .hero-subtitle {
-            font-size: 1.2rem;
-            color: var(--my-white);
-            margin-bottom: 5px;
-            letter-spacing: 2px;
-            opacity: 0.9;
-        }
+/* --- 副標題區塊 (保持不變或微調) --- */
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: var(--my-white);
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+    opacity: 0.9;
+}
 
-        .hero-sub-taiwan {
-            font-size: 2rem;
-            color: var(--my-yellow);
-            font-weight: bold;
-            margin-bottom: 40px;
-            text-shadow: 0 0 10px var(--c-orange);
-        }
+.hero-sub-taiwan {
+    font-size: 2rem;
+    color: var(--my-yellow);
+    font-weight: bold;
+    margin-bottom: 40px;
+    /* 稍微增強一點發光感來搭配主標題 */
+    text-shadow: 0 0 15px var(--c-orange), 0 0 5px var(--my-yellow);
+}
+        /* 首頁動態影片容器 - 已升級為六色呼吸流光燈版本 */
+.hero-video-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px; /* 維持你原本的 600px */
+    aspect-ratio: 16/9;
+    margin: 40px auto;
+    padding: 4px; /* 這裡決定燈管的粗細 */
+    border-radius: 15px;
+    background: #000;
+    overflow: hidden; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
 
-        /* 首頁動態影片容器 */
-        .hero-video-container {
-            width: 100%;
-            max-width: 600px;
-            aspect-ratio: 16/9;
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(0, 0, 255, 0.3);
-            background: #000;
-            position: relative;
-        }
-        
-        .hero-video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* 確保 Logo 完整顯示 */
-        }
+/* 呼吸變色燈核心 (紅、橙、黃、綠、藍、紫) */
+.hero-video-container::before {
+    content: "";
+    position: absolute;
+    width: 160%;
+    height: 160%;
+    background: conic-gradient(
+        #ff0000, #ff8c00, #ffff00, #00ff00, #0000ff, #8b00ff, #ff0000
+    );
+    animation: rotateFlow 4s linear infinite, breathe 3s ease-in-out infinite;
+    z-index: 1;
+}
 
+/* 內層遮罩 - 讓中間維持黑色，只露出一圈邊框 */
+.hero-video-container::after {
+    content: "";
+    position: absolute;
+    inset: 4px; 
+    background: #000;
+    border-radius: 12px;
+    z-index: 2;
+}
+
+/* 影片本體 */
+.hero-video-container video {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 維持你原本的 Logo 完整顯示設定 */
+    border-radius: 11px;
+    display: block;
+    z-index: 3;
+}
+
+/* 流光旋轉動畫 */
+@keyframes rotateFlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 霓虹呼吸發光效果 */
+@keyframes breathe {
+    0%, 100% { opacity: 0.6; filter: blur(4px); }
+    50% { opacity: 1; filter: blur(10px); }
+}
         /* 響應式字體調整 */
         @media (max-width: 768px) {
             .hero-title { font-size: 3rem; }
