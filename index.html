@@ -68,11 +68,9 @@
             background: var(--bg-grad);
         }
 
-        /* =========================================
-           3. 導覽列 (Navigation)
-           ========================================= */
-       /* =========================================
-   導覽列：能量脈動與電子回饋升級版
+
+/* =========================================
+   導覽列：三色能量波浪燈 (深藍/金黃/酒紅)
    ========================================= */
 .navbar {
     position: fixed;
@@ -85,19 +83,26 @@
     padding: 0 5%;
     z-index: 1000;
     backdrop-filter: blur(10px); /* 保留毛玻璃效果 */
-    border-bottom: 1px solid rgba(0, 191, 255, 0.3); /* 改為淡藍邊框更具科技感 */
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 
-    /* --- 核心：能量脈動背景 --- */
-    /* 這裡使用你原本的深藍色 rgba(1, 0, 102, 0.7) 作為基底，混合能量流動漸層 */
+    /* --- 核心特效：三色變色波浪燈 --- */
+    /* 使用深藍、金黃、酒紅進行交錯，頭尾顏色一致實現無縫循環 */
     background: linear-gradient(90deg, 
-        rgba(1, 0, 102, 0.85) 0%, 
-        rgba(0, 31, 150, 0.85) 25%, 
-        rgba(0, 60, 200, 0.85) 50%, 
-        rgba(0, 31, 150, 0.85) 75%, 
-        rgba(1, 0, 102, 0.85) 100%
+        rgba(1, 0, 102, 0.9) 0%,     /* 深藍 */
+        rgba(212, 175, 55, 0.85) 25%, /* 金黃 */
+        rgba(128, 0, 32, 0.9) 50%,    /* 酒紅 */
+        rgba(212, 175, 55, 0.85) 75%, /* 金黃 */
+        rgba(1, 0, 102, 0.9) 100%    /* 深藍 */
     );
-    background-size: 200% 100%;
-    animation: navEnergyFlow 8s linear infinite; /* 8秒一波，緩慢流動感 */
+    
+    /* 背景放大到 300% 讓顏色區間拉長，波浪移動感才會明顯 */
+    background-size: 300% 100%;
+    
+    /* 設定 5 秒流動一圈，產生能量穩定傳輸的視覺感 */
+    animation: navTriColorFlow 5s linear infinite;
+    
+    /* 增加內部光亮感，強化立體感 */
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), 0 5px 15px rgba(0,0,0,0.5);
 }
 
 .nav-brand {
@@ -114,7 +119,6 @@
     transition: transform 0.3s;
 }
 
-/* 標題保留原有的藍色發光感 */
 .nav-title {
     font-size: 1.2rem;
     font-weight: bold;
@@ -132,19 +136,34 @@
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
-    transition: all 0.2s; /* 縮短時間讓閃爍更即時 */
+    transition: all 0.2s;
     position: relative;
     letter-spacing: 0.5px;
 }
 
-/* --- 核心：觸碰閃爍回饋 --- */
+/* --- 核心：觸碰閃爍回饋 (保留原本的強烈電路感) --- */
 .nav-links a:hover {
     color: var(--my-yellow) !important;
-    /* 強烈電子閃爍動畫 */
     animation: electricFlicker 0.1s infinite;
-    /* 黃色霓虹爆炸發光 */
     text-shadow: 0 0 10px var(--my-yellow), 0 0 20px var(--my-yellow);
-    filter: brightness(1.4);
+    filter: brightness(1.5);
+}
+
+/* --- 動畫 Keyframes --- */
+
+/* 三色能量流動動畫 */
+@keyframes navTriColorFlow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: -300% 0%; }
+}
+
+/* 電子閃爍效果 */
+@keyframes electricFlicker {
+    0% { opacity: 1; transform: scale(1.05) skewX(0deg); }
+    25% { opacity: 0.8; transform: scale(1.05) skewX(-2deg); }
+    50% { opacity: 1; transform: scale(1.05) skewX(2deg); }
+    75% { opacity: 0.9; transform: scale(1.05) skewX(0deg); }
+    100% { opacity: 1; }
 }
 
 /* --- 動畫 Keyframes 定義 --- */
